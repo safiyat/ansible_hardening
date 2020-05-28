@@ -1,5 +1,6 @@
 ---
-- hosts: localhost
+# ansible-playbook playbook.yaml --check --ask-pass --ask-become-pass --become --limit <host-group>
+- hosts: all
   vars:
   remote_user: root
   tasks:
@@ -84,6 +85,7 @@
   - lineinfile:
       path: /etc/audit/rules.d/time-change.rules
       line: "{{ item }}"
+      create: yes
     with_items:
       - '-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time-change'
       - '-a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k time-change'
@@ -100,6 +102,7 @@
   - lineinfile:
       path: /etc/audit/audit.rules
       line: "{{ item }}"
+      create: yes
     with_items:
       - '-w /etc/group -p wa -k identity'
       - '-w /etc/passwd -p wa -k identity'
@@ -116,6 +119,7 @@
   - lineinfile:
       path: /etc/audit/audit.rules
       line: "{{ item }}"
+      create: yes
     with_items:
       - '-w /etc/group -p wa -k identity'
       - '-w /etc/passwd -p wa -k identity'
@@ -135,6 +139,7 @@
   - lineinfile:
       path: /etc/audit/rules.d/MAC-policy.rules
       line: "{{ item }}"
+      create: yes
     with_items:
       - '-w /etc/selinux/ -p wa -k MAC-policy'
       - '-w /usr/share/selinux/ -p wa -k MAC-policy'
@@ -144,6 +149,7 @@
   - lineinfile:
       path: /etc/audit/rules.d/logins.rules
       line: "{{ item }}"
+      create: yes
     with_items:
       - '-w /var/log/wtmp -p wa -k logins'
       - '-w /var/log/btmp -p wa -k logins'
@@ -161,6 +167,7 @@
   - lineinfile:
       path: /etc/audit/rules.d/perm_mod.rules
       line: "{{ item }}"
+      create: yes
     with_items:
       - '-a always,exit -F arch=b64 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=4294967295 -k perm_mod'
       - '-a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=4294967295 -k perm_mod'
@@ -181,6 +188,7 @@
   - lineinfile:
       path: /etc/audit/rules.d/access.rules
       line: "{{ item }}"
+      create: yes
     with_items:
       - '-a always,exit -F arch=b64 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access'
       - '-a always,exit -F arch=b32 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access'
@@ -209,6 +217,7 @@
   - lineinfile:
       path: /etc/audit/rules.d/delete.rules
       line: "{{ item }}"
+      create: yes
     with_items:
       - '-a always,exit -F arch=b64 -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=4294967295 -k delete'
       - '-a always,exit -F arch=b32 -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=4294967295 -k delete'
@@ -240,6 +249,7 @@
   - lineinfile:
       path: "{{ item.path }}"
       line: "$FileCreateMode 0640"
+      create: yes
     with_items:
       - "{{ conf_files.files }}"
       - path: /etc/rsyslog.conf
