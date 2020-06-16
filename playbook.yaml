@@ -92,13 +92,36 @@
       - '-a always,exit -F arch=b64 -S clock_settime -k time-change'
       - '-a always,exit -F arch=b32 -S clock_settime -k time-change'
       - '-w /etc/localtime -p wa -k time-change'
+  - lineinfile:
+      path: /etc/audit/audit.rules
+      line: "{{ item }}"
+      create: yes
+    with_items:
+      - '-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time-change'
+      - '-a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k time-change'
+      - '-a always,exit -F arch=b64 -S clock_settime -k time-change'
+      - '-a always,exit -F arch=b32 -S clock_settime -k time-change'
+      - '-w /etc/localtime -p wa -k time-change'
 
   - debug:
       msg: 4.1.5-Ensure events that modify user/group information are collected
   - lineinfile:
-      path: /etc/audit/audit.rules
+      path: "{{ item }}"
       regexp: '.*identity$'
       state: absent
+    with_items:
+      - /etc/audit/rules.d/identity.rules
+      - /etc/audit/audit.rules
+  - lineinfile:
+      path: /etc/audit/rules.d/identity.rules
+      line: "{{ item }}"
+      create: yes
+    with_items:
+      - '-w /etc/group -p wa -k identity'
+      - '-w /etc/passwd -p wa -k identity'
+      - '-w /etc/gshadow -p wa -k identity'
+      - '-w /etc/shadow -p wa -k identity'
+      - '-w /etc/security/opasswd -p wa -k identity'
   - lineinfile:
       path: /etc/audit/audit.rules
       line: "{{ item }}"
@@ -113,19 +136,36 @@
   - debug:
       msg: 4.1.6-Ensure events that modify the system's network environment are collected
   - lineinfile:
-      path: /etc/audit/audit.rules
-      regexp: '.*identity$'
+      path: "{{ item }}"
+      regexp: '.*system-locale$'
       state: absent
+    with_items:
+      - /etc/audit/rules.d/system-locale.rules
+      - /etc/audit/audit.rules
+  - lineinfile:
+      path: /etc/audit/rules.d/system-locale.rules
+      line: "{{ item }}"
+      create: yes
+    with_items:
+      - "-a always,exit -F arch=b64 -S sethostname -S setdomainname -k system-locale"
+      - "-a always,exit -F arch=b32 -S sethostname -S setdomainname -k system-locale"
+      - "-w /etc/issue -p wa -k system-locale"
+      - "-w /etc/issue.net -p wa -k system-locale"
+      - "-w /etc/hosts -p wa -k system-locale"
+      - "-w /etc/sysconfig/network -p wa -k system-locale"
+      - "-w /etc/sysconfig/network-scripts/ -p wa -k system-locale"
   - lineinfile:
       path: /etc/audit/audit.rules
       line: "{{ item }}"
       create: yes
     with_items:
-      - '-w /etc/group -p wa -k identity'
-      - '-w /etc/passwd -p wa -k identity'
-      - '-w /etc/gshadow -p wa -k identity'
-      - '-w /etc/shadow -p wa -k identity'
-      - '-w /etc/security/opasswd -p wa -k identity'
+      - "-a always,exit -F arch=b64 -S sethostname -S setdomainname -k system-locale"
+      - "-a always,exit -F arch=b32 -S sethostname -S setdomainname -k system-locale"
+      - "-w /etc/issue -p wa -k system-locale"
+      - "-w /etc/issue.net -p wa -k system-locale"
+      - "-w /etc/hosts -p wa -k system-locale"
+      - "-w /etc/sysconfig/network -p wa -k system-locale"
+      - "-w /etc/sysconfig/network-scripts/ -p wa -k system-locale"
 
   - debug:
       msg: 4.1.7-Ensure events that modify the systems Mandatory Access Controls are collected
@@ -143,11 +183,33 @@
     with_items:
       - '-w /etc/selinux/ -p wa -k MAC-policy'
       - '-w /usr/share/selinux/ -p wa -k MAC-policy'
+  - lineinfile:
+      path: /etc/audit/audit.rules
+      line: "{{ item }}"
+      create: yes
+    with_items:
+      - '-w /etc/selinux/ -p wa -k MAC-policy'
+      - '-w /usr/share/selinux/ -p wa -k MAC-policy'
 
   - debug:
       msg: 4.1.9-Ensure session initiation information is collected
   - lineinfile:
+      path: "{{ item }}"
+      regexp: '.*(logins|session)$'
+      state: absent
+    with_items:
+      - /etc/audit/rules.d/logins.rules
+      - /etc/audit/audit.rules
+  - lineinfile:
       path: /etc/audit/rules.d/logins.rules
+      line: "{{ item }}"
+      create: yes
+    with_items:
+      - '-w /var/log/wtmp -p wa -k logins'
+      - '-w /var/log/btmp -p wa -k logins'
+      - '-w /var/run/utmp -p wa -k session'
+  - lineinfile:
+      path: /etc/audit/audit.rules
       line: "{{ item }}"
       create: yes
     with_items:
@@ -166,6 +228,17 @@
       - /etc/audit/audit.rules
   - lineinfile:
       path: /etc/audit/rules.d/perm_mod.rules
+      line: "{{ item }}"
+      create: yes
+    with_items:
+      - '-a always,exit -F arch=b64 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=4294967295 -k perm_mod'
+      - '-a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=4294967295 -k perm_mod'
+      - '-a always,exit -F arch=b64 -S chown -S fchown -S fchownat -S lchown -F auid>=1000 -F auid!=4294967295 -k perm_mod'
+      - '-a always,exit -F arch=b32 -S chown -S fchown -S fchownat -S lchown -F auid>=1000 -F auid!=4294967295 -k perm_mod'
+      - '-a always,exit -F arch=b64 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=1000 -F auid!=4294967295 -k perm_mod'
+      - '-a always,exit -F arch=b32 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=1000 -F auid!=4294967295 -k perm_mod'
+  - lineinfile:
+      path: /etc/audit/audit.rules
       line: "{{ item }}"
       create: yes
     with_items:
@@ -194,11 +267,34 @@
       - '-a always,exit -F arch=b32 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access'
       - '-a always,exit -F arch=b64 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access'
       - '-a always,exit -F arch=b32 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access'
+- lineinfile:
+      path: /etc/audit/audit.rules
+      line: "{{ item }}"
+      create: yes
+    with_items:
+      - '-a always,exit -F arch=b64 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access'
+      - '-a always,exit -F arch=b32 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access'
+      - '-a always,exit -F arch=b64 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access'
+      - '-a always,exit -F arch=b32 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access'
 
   - debug:
       msg: 4.1.13-Ensure successful file system mounts are collected
   - lineinfile:
+      path: "{{ item }}"
+      regexp: '.*mounts$'
+      state: absent
+    with_items:
+      - /etc/audit/rules.d/mounts.rules
+      - /etc/audit/audit.rules
+  - lineinfile:
       path: /etc/audit/rules.d/mounts.rules
+      line: "{{ item }}"
+      create: yes
+    with_items:
+      - '-a always,exit -F arch=b64 -S mount -F auid>=1000 -F auid!=4294967295 -k mounts'
+      - '-a always,exit -F arch=b32 -S mount -F auid>=1000 -F auid!=4294967295 -k mounts'
+  - lineinfile:
+      path: /etc/audit/audit.rules
       line: "{{ item }}"
       create: yes
     with_items:
@@ -221,11 +317,32 @@
     with_items:
       - '-a always,exit -F arch=b64 -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=4294967295 -k delete'
       - '-a always,exit -F arch=b32 -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=4294967295 -k delete'
+  - lineinfile:
+      path: /etc/audit/audit.rules
+      line: "{{ item }}"
+      create: yes
+    with_items:
+      - '-a always,exit -F arch=b64 -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=4294967295 -k delete'
+      - '-a always,exit -F arch=b32 -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=4294967295 -k delete'
 
   - debug:
       msg: 4.1.15-Ensure changes to system administration scope is collected
   - lineinfile:
+      path: "{{ item }}"
+      regexp: '.*scope$'
+      state: absent
+    with_items:
+      - /etc/audit/rules.d/scope.rules
+      - /etc/audit/audit.rules
+  - lineinfile:
       path: /etc/audit/rules.d/scope.rules
+      line: "{{ item }}"
+      create: yes
+    with_items:
+      - '-w /etc/sudoers -p wa -k scope'
+      - '-w /etc/sudoers.d/ -p wa -k scope'
+  - lineinfile:
+      path: /etc/audit/audit.rules
       line: "{{ item }}"
       create: yes
     with_items:
