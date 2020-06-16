@@ -1,0 +1,59 @@
+---
+# ansible-playbook adhoc1.yaml --inventory ~/ansible-hosts --check --ask-pass --ask-become-pass --become --limit <host-group>
+# Playbook to
+# - update the 10 minute SSH session timeout to 15 minutes.
+# - Set the lockout time to 60 minutes for local users.
+- hosts: all
+  vars:
+  remote_user: erezsaf
+  tasks:
+  - name: Update timeout to 900 seconds
+    lineinfile:
+      path: /etc/profile
+      regexp: "TMOUT=600"
+      line: "TMOUT=900"
+  - name: Update timeout comment.
+    lineinfile:
+      path: /etc/profile
+      regexp: "# Set TMOUT to 600 per security requirements"
+      line: "# Set TMOUT to 900. A value of 600 is recommended as per NIST requirements."
+
+  # - name: Change unlock time on failed logins to 60 minutes.
+  #   lineinfile:
+  #     path: "{{ item.path }}"
+  #     regexp: '^(.*)=1800(.*)$'
+  #     line: '\1=3600\2'
+  #     backrefs: yes
+  #   with_items:
+  #     - /home/erezsaf/faillock
+
+  - name: List all PAM files to modify.
+    find:
+      paths: /etc/pam.d/
+      patterns: "*"
+      file_type: file
+    register: conf_files
+
+  - name: Change unlock time on failed logins to 60 minutes.
+    replace:
+      path: "{{ item.path }}"
+      regexp: '^(.*)=1800(.*)$'
+      replace: '\1=3600\2'
+    with_items:
+      - "{{ conf_files.files }}"
+
+  - name: Change unlock time on failed logins to 60 minutes. Making sure
+    replace:
+      path: "{{ item.path }}"
+      regexp: '^(.*)=1800(.*)$'
+      replace: '\1=3600\2'
+    with_items:
+      - "{{ conf_files.files }}"
+
+  - name: Change unlock time on failed logins to 60 minutes. One last time?
+    replace:
+      path: "{{ item.path }}"
+      regexp: '^(.*)=1800(.*)$'
+      replace: '\1=3600\2'
+    with_items:
+      - "{{ conf_files.files }}"
