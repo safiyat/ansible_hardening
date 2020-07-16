@@ -1,0 +1,15 @@
+---
+# ansible-playbook pam.d.yaml --check --ask-pass --ask-become-pass --become --limit <host-group>
+- hosts: all
+  vars:
+  remote_user: erezsaf
+  tasks:
+    - name: Update pamd rule's control in /etc/pam.d/password-auth
+      # auth        [default=die] pam_faillock.so authfail deny=6 unlock_time=3600 fail_interval=900 unlock_time=3600 deny=6
+      pamd:
+        name: password-auth
+        type: auth
+        control: "[default=die]"
+        module_path: pam_faillock.so
+        module_arguments: authfail,fail_interval=900,unlock_time=3600,deny=6
+        state: updated

@@ -2,7 +2,7 @@
 # ansible-playbook playbook.yaml --check --ask-pass --ask-become-pass --become --limit <host-group>
 - hosts: all
   vars:
-  remote_user: root
+  remote_user: erezsaf
   tasks:
   - debug:
       msg: 3.1.2-Ensure packet redirect sending is disabled

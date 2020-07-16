@@ -1,0 +1,18 @@
+---
+# ansible-playbook adhoc2.yaml --check --ask-pass --ask-become-pass --become --limit <host-group>
+- hosts: all
+  vars:
+  remote_user: erezsaf
+  tasks:
+  - name: Update /etc/profile.d/ with a value for HISTTIMEFORMAT.
+    lineinfile:
+        path: /etc/profile.d/history.sh
+        line: "HISTTIMEFORMAT=\"%F %T \""
+        mode: 0644
+        owner: root
+        group: root
+        create: yes
+  - name: Update the access times of /etc/security/pwquality.conf
+    file:
+      path: /etc/security/pwquality.conf
+      modification_time: "201912111340.53"

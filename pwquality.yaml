@@ -1,0 +1,44 @@
+---
+# ansible-playbook pwquality.yaml --inventory ~/ansible-hosts --check --ask-pass --ask-become-pass --become --limit <host-group>
+# Playbook to
+# - update the 10 minute SSH session timeout to 15 minutes.
+# - Set the lockout time to 60 minutes for local users.
+- hosts: all
+  vars:
+  remote_user: erezsaf
+  tasks:
+  - name: Update minlen of the password to 8.
+    ini_file:
+      path: /etc/security/pwquality.conf
+      section:
+      option: minlen
+      value: 8
+  - name: Update ucredit to -1.
+    ini_file:
+      path: /etc/security/pwquality.conf
+      section:
+      option: dcredit
+      value: -1
+  - name: Update ucredit to -1.
+    ini_file:
+      path: /etc/security/pwquality.conf
+      section:
+      option: ucredit
+      value: -1
+  - name: Update lcredit to -1.
+    ini_file:
+      path: /etc/security/pwquality.conf
+      section:
+      option: lcredit
+      value: -1
+  - name: Update ocredit to -1.
+    ini_file:
+      path: /etc/security/pwquality.conf
+      section:
+      option: ocredit
+      value: -1
+  - name: Update pamd rule's control in /etc/pam.d/password-auth
+    replace:
+      path: /etc/pam.d/password-auth
+      regexp: 'deny=\d+'
+      replace: 'deny=5'
